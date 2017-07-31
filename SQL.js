@@ -96,8 +96,8 @@ exports.initializeTimeEntries = function(){
     var intervalID = setInterval(function() {
         if (year < 2018){
             if (day < 367){
-                options.path = '/daily/' + day + '/' + year;
-                updateTimeEntries();
+                options.path = '/daily/' + day + '/' + year + "?slim=1";
+                updateTimeEntries2(day, year);
                 day++;
             } else {
                 day = 1;
@@ -111,15 +111,17 @@ exports.initializeTimeEntries = function(){
     }, 16000);
 };
 
-function updateTimeEntries(){
+function updateTimeEntries(day, year){
     RetrieveData.getJSON(options, function(statusCode, result) {
         if (statusCode === 200) {
-        for (var i = 0; i < result.day_entries.length; i++) {
-            var timeEntry = result.day_entries[i];
+            console.log(result);
 
-            connection.query("INSERT INTO timeEntries (id, user_id, project_id, spent_at, hours) VALUES ('" + timeEntry.id + "', '" + timeEntry.user_id + "', '" +
-                timeEntry.project_id + "', '" + timeEntry.spent_at + "', '" + timeEntry.hours + "') " + "ON DUPLICATE KEY UPDATE id='" + timeEntry.id + "', user_id='" +
-                timeEntry.user_id + "', project_id='" + timeEntry.project_id + "', spent_at='" + timeEntry.spent_at + "', hours='" + timeEntry.hours + "'");
+            for (var i = 0; i < result.day_entries.length; i++) {
+                var timeEntry = result.day_entries[i];
+
+                connection.query("INSERT INTO timeEntries (id, user_id, project_id, spent_at, hours) VALUES ('" + timeEntry.id + "', '" + timeEntry.user_id + "', '" +
+                    timeEntry.project_id + "', '" + timeEntry.spent_at + "', '" + timeEntry.hours + "') " + "ON DUPLICATE KEY UPDATE id='" + timeEntry.id + "', user_id='" +
+                    timeEntry.user_id + "', project_id='" + timeEntry.project_id + "', spent_at='" + timeEntry.spent_at + "', hours='" + timeEntry.hours + "'");
 
             }
         }
@@ -127,6 +129,37 @@ function updateTimeEntries(){
             console.log("An error has occurred when updating time entries.")
         }
     })
+}
+
+function updateTimeEntries2(day, year){
+    options.path = '/people';
+    RetrieveData.getJSON(options, function(statusCode, result) {
+        if (statusCode === 200) {
+            for (var i = 0; i < result.length; i++) {
+                var employee = result[i].user;
+                if (employee.is_active) {
+                    options.path = '/daily/' + day + '/' + year + "?of_user=" + employee.id;
+                    RetrieveData.getJSON(options, function (statusCode, result) {
+                        if (statusCode === 200) {
+                            for (var i = 0; i < result.day_entries.length; i++) {
+                                var timeEntry = result.day_entries[i];
+
+                                connection.query("INSERT INTO timeEntries (id, user_id, project_id, spent_at, hours) VALUES ('" + timeEntry.id + "', '" + timeEntry.user_id + "', '" +
+                                    timeEntry.project_id + "', '" + timeEntry.spent_at + "', '" + timeEntry.hours + "') " + "ON DUPLICATE KEY UPDATE id='" + timeEntry.id + "', user_id='" +
+                                    timeEntry.user_id + "', project_id='" + timeEntry.project_id + "', spent_at='" + timeEntry.spent_at + "', hours='" + timeEntry.hours + "'");
+
+                            }
+                        } else {
+                            console.log("An error has occurred when updating time entries. " + JSON.stringify(result))
+                        }
+                    })
+                }
+            }
+            console.log("Updating time entries...");
+        } else{
+            console.log("An error has occurred when updating time entries. " + JSON.stringify(result))
+        }
+    });
 }
 
 exports.updateInvoices = function(){
@@ -229,12 +262,14 @@ exports.updateTimeEntries = function(){
     RetrieveData.getJSON(options, function(statusCode, result) {
         if (statusCode === 200) {
             console.log("Updating time entries: done!");
+            console.log("Length of people!!" + result.length)
             for (var i = 0; i < result.length; i++) {
                 var employee = result[i].user;
                 if (employee.is_active) {
                     options.path = '/daily/' + dayOfTheYearYesterday + '/' + d.getFullYear() + "?of_user=" + employee.id;
                     RetrieveData.getJSON(options, function (statusCode, result) {
                         if (statusCode === 200) {
+                            console.log(employee.id + " " + result.day_entries.length);
                             for (var i = 0; i < result.day_entries.length; i++) {
                                 var timeEntry = result.day_entries[i];
 
