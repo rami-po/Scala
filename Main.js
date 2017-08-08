@@ -38,15 +38,12 @@ exports.updateSQL = function(){
 };
 
 function updateSQLCron(){
-    /*
     SQL.updateClients();
     SQL.updateEmployees();
     SQL.updateInvoices();
     SQL.updateProjectsAndAssignments();
     SQL.updateTimeEntries();
-    */
-
-    SQL.initializeTimeEntries();
+    SQL.updateTasks();
 }
 
 updateSQLCron();

@@ -90,12 +90,129 @@ exports.updateEmployees = function(){
     })
 };
 
+exports.updateInvoices = function(){
+    options.path = '/invoices';
+    RetrieveData.getJSON(options, function(statusCode, result) {
+        if (statusCode === 200) {
+            console.log("Updating invoices: done!");
+            for (var i = 0; i < result.length; i++) {
+                var invoice = result[i].invoices;
+
+                connection.query("INSERT INTO invoices (id, client_id, number, amount, state, created_date, issued_date, project_id, companies) VALUES ('" + invoice.id + "', '" + invoice.client_id + "', '" +
+                    invoice.number + "', '" + invoice.amount + "', '" + invoice.state + "', '" + invoice.created_at + "', '" + invoice.issued_at + "', '" + invoice.project_id + "', '" + invoice.companies + "') " +
+                    "ON DUPLICATE KEY UPDATE client_id='" + invoice.client_id + "', number='" + invoice.number + "', amount='" + invoice.amount + "', state='" + invoice.state + "', created_date='" + invoice.created_at
+                    + "', issued_date='" + invoice.issued_at + "', project_id='" + invoice.project_id + "', companies='" + invoice.companies + "'");
+            }
+        } else {
+            console.log("An error has occurred when updating invoices.")
+        }
+    })
+};
+
+exports.updateProjectsAndAssignments = function(){
+    var yesterday = new Date();
+    yesterday.setDate(yesterday.getDate()-1);
+
+    var updated_since = yesterday.toISOString().substring(0,10) + '+00%3A00';
+
+    options.path = '/projects';//?updated_since=' + updated_since;
+    var projectIds = [];
+
+    RetrieveData.getJSON(options, function(statusCode, result) {
+        if (statusCode === 200) {
+            console.log("Updating projects: done!");
+            for (var i = 0; i < result.length; i++) {
+                var project = result[i].project;
+                if (project.active){
+                    projectIds.push(project.id);
+                }
+
+                connection.query("INSERT INTO projects (id, client_id, active, name, code, cost_budget, billable, budget_by, state, created_date, last_checked_date, weekly_hour_budget) VALUES ('" + project.id + "', '" + project.client_id + "', '" +
+                    +project.active + "', '" + project.name + "', '" + project.code + "', '" + project.cost_budget + "', '" + +project.billable + "', '" + project.budget_by + "', '" + project.state + "', '" + project.created_at + "', '" +
+                    project.hint_latest_record_at + "', '" + project.weekly_hour_budget + "') ON DUPLICATE KEY UPDATE client_id='" + project.client_id + "', active='" + +project.active + "', name='" + project.name + "', code='" + project.code +
+                    "', cost_budget='" + project.cost_budget + "', billable='" + +project.billable + "', budget_by='" + project.budget_by + "', state='" + project.state + "', created_date='" + project.created_at + "', last_checked_date='" +
+                    project.hint_latest_record_at + "', weekly_hour_budget='" + project.hourly_rate + "'");
+
+            }
+            updateAssignments(projectIds);
+        } else {
+            console.log("An error has occurred when updating projects.")
+        }
+    })
+};
+
+exports.updateTimeEntries = function() {
+    var d = new Date();
+    d.setDate(d.getDate() - 1);
+    var dayOfTheYearYesterday = d.getDOY();
+
+    options.path = '/people';
+    RetrieveData.getJSON(options, function(statusCode, result) {
+        if (statusCode === 200) {
+            for (var i = 0; i < result.length; i++) {
+                var employee = result[i].user;
+                if (employee.is_active) {
+                    options.path = '/daily/' + dayOfTheYearYesterday + '/' + d.getFullYear() + "?of_user=" + employee.id;
+                    //options.path = '/daily?of_user=' + employee.id;
+                    RetrieveData.getJSON(options, function (statusCode, result) {
+                        if (statusCode === 200) {
+                            for (var i = 0; i < result.day_entries.length; i++) {
+                                var timeEntry = result.day_entries[i];
+
+                                if (timeEntry.notes != null){
+                                    timeEntry.notes = timeEntry.notes.replace("'", "''");
+                                }
+
+                                connection.query("INSERT INTO timeEntries (id, user_id, project_id, task_id, notes, spent_at, hours) VALUES ('" + timeEntry.id + "', '" + timeEntry.user_id + "', '" +
+                                    timeEntry.project_id + "', '" + timeEntry.task_id + "', '" + timeEntry.notes + "', '" + timeEntry.spent_at + "', '" + timeEntry.hours + "') " +
+                                    "ON DUPLICATE KEY UPDATE id='" + timeEntry.id + "', user_id='" + timeEntry.user_id + "', project_id='" + timeEntry.project_id  + "', task_id='" +
+                                    timeEntry.task_id  + "', notes='" + timeEntry.notes + "', spent_at='" + timeEntry.spent_at + "', hours='" + timeEntry.hours + "'");
+
+                            }
+                        } else {
+                            console.log("An error has occurred when updating time entries.")
+                        }
+                    })
+                }
+            }
+            console.log("Updating time entries for day " + dayOfTheYearYesterday + ": done!");
+        } else{
+            console.log("An error has occurred when updating time entries (getting employees).")
+        }
+    });
+};
+
+exports.updateTasks = function () {
+    options.path = '/tasks?updated_since=2008-01-01';
+    RetrieveData.getJSON(options, function(statusCode, result) {
+        if (statusCode === 200) {
+            console.log("Updating tasks: done!");
+            for (var i = 0; i < result.length; i++) {
+                var task = result[i].task;
+
+                connection.query("INSERT INTO tasks (id, name, billable_by_default, created_at, updated_at, is_default, default_hourly_rate, deactivated) VALUES ('" + task.id + "', '" + task.name + "', '" +
+                    +task.billable_by_default + "', '" + task.created_at + "', '" + task.updated_at + "', '" + +task.is_default + "', '" + task.default_hourly_rate + "', '" + +task.deactivated +
+                    "') ON DUPLICATE KEY UPDATE name='" + task.name + "', billable_by_default='" + +task.billable_by_default + "', created_at='" + task.created_at + "', updated_at='" + task.updated_at +
+                    "', is_default='" + +task.is_default + "', default_hourly_rate='" + task.default_hourly_rate + "', deactivated='" + +task.deactivated + "'");
+
+            }
+        } else {
+            console.log("An error has occurred when updating projects.")
+        }
+    })
+};
+
+/*
+ * Other Functions
+ */
+
 exports.initializeTimeEntries = function(){
     var year = 2008;
     var day = 1;
     var intervalID = setInterval(function() {
         if (year < 2018){
             if (day < 367){
+                console.log("Day: " + day +", Year: " + year);
                 options.path = '/daily/' + day + '/' + year + "?slim=1";
                 updateTimeEntries2(day, year);
                 day++;
@@ -133,11 +250,13 @@ function updateTimeEntries(day, year){
 
 function updateTimeEntries2(day, year){
     options.path = '/people';
+    var x = 0;
     RetrieveData.getJSON(options, function(statusCode, result) {
         if (statusCode === 200) {
             for (var i = 0; i < result.length; i++) {
                 var employee = result[i].user;
-                if (employee.is_active) {
+                if (!employee.is_active) {
+                    x++;
                     options.path = '/daily/' + day + '/' + year + "?of_user=" + employee.id;
                     RetrieveData.getJSON(options, function (statusCode, result) {
                         if (statusCode === 200) {
@@ -150,66 +269,18 @@ function updateTimeEntries2(day, year){
 
                             }
                         } else {
-                            console.log("An error has occurred when updating time entries. " + JSON.stringify(result))
+                            console.log("An error has occurred when updating time entries. " + JSON.stringify(result));
                         }
                     })
                 }
             }
+            console.log(x);
             console.log("Updating time entries...");
         } else{
-            console.log("An error has occurred when updating time entries. " + JSON.stringify(result))
+            console.log("An error has occurred when updating time entries.. " + JSON.stringify(result));
         }
     });
 }
-
-exports.updateInvoices = function(){
-    options.path = '/invoices';
-    RetrieveData.getJSON(options, function(statusCode, result) {
-        if (statusCode === 200) {
-            console.log("Updating invoices: done!");
-            for (var i = 0; i < result.length; i++) {
-                var invoice = result[i].invoices;
-
-                connection.query("INSERT INTO invoices (id, client_id, number, amount, state, created_date, issued_date, project_id, companies) VALUES ('" + invoice.id + "', '" + invoice.client_id + "', '" +
-                    invoice.number + "', '" + invoice.amount + "', '" + invoice.state + "', '" + invoice.created_at + "', '" + invoice.issued_at + "', '" + invoice.project_id + "', '" + invoice.companies + "') " +
-                    "ON DUPLICATE KEY UPDATE client_id='" + invoice.client_id + "', number='" + invoice.number + "', amount='" + invoice.amount + "', state='" + invoice.state + "', created_date='" + invoice.created_at
-                    + "', issued_date='" + invoice.issued_at + "', project_id='" + invoice.project_id + "', companies='" + invoice.companies + "'");
-            }
-        } else {
-            console.log("An error has occurred when updating invoices.")
-        }
-    })
-};
-
-exports.updateProjectsAndAssignments = function(){
-    var yesterday = new Date();
-    yesterday.setDate(yesterday.getDate()-1);
-
-    var updated_since = yesterday.toISOString().substring(0,10) + '+00%3A00';
-
-    options.path = '/projects?updated_since=' + updated_since;
-    var projectIds = [];
-
-    RetrieveData.getJSON(options, function(statusCode, result) {
-        if (statusCode === 200) {
-            console.log("Updating projects: done!");
-            for (var i = 0; i < result.length; i++) {
-                var project = result[i].project;
-                projectIds.push(project.id);
-
-                connection.query("INSERT INTO projects (id, client_id, active, name, code, cost_budget, billable, budget_by, state, created_date, last_checked_date, weekly_hour_budget) VALUES ('" + project.id + "', '" + project.client_id + "', '" +
-                    +project.active + "', '" + project.name + "', '" + project.code + "', '" + project.cost_budget + "', '" + +project.billable + "', '" + project.budget_by + "', '" + project.state + "', '" + project.created_at + "', '" +
-                    project.hint_latest_record_at + "', '" + project.weekly_hour_budget + "') ON DUPLICATE KEY UPDATE client_id='" + project.client_id + "', active='" + +project.active + "', name='" + project.name + "', code='" + project.code +
-                    "', cost_budget='" + project.cost_budget + "', billable='" + +project.billable + "', budget_by='" + project.budget_by + "', state='" + project.state + "', created_date='" + project.created_at + "', last_checked_date='" +
-                    project.hint_latest_record_at + "', weekly_hour_budget='" + project.hourly_rate + "'");
-
-            }
-            updateAssignments(projectIds);
-        } else {
-            console.log("An error has occurred when updating projects.")
-        }
-    })
-};
 
 function updateAssignments(projectIds){
     var j = 0;
@@ -224,13 +295,13 @@ function updateAssignments(projectIds){
         }
     }, 16000);
     /*
-    for (var j = 0; j < projectIds.length; j++){
-        options.path = '/projects/' + projectIds[j] + '/user_assignments';
-        updateAssignment();
-        //setTimeout(updateAssignment, 16000);
-    }
-    console.log("Updating assignments: done!");
-    */
+     for (var j = 0; j < projectIds.length; j++){
+     options.path = '/projects/' + projectIds[j] + '/user_assignments';
+     updateAssignment();
+     //setTimeout(updateAssignment, 16000);
+     }
+     console.log("Updating assignments: done!");
+     */
 }
 
 function updateAssignment(){
@@ -252,40 +323,3 @@ function updateAssignment(){
         }
     })
 }
-
-exports.updateTimeEntries = function(){
-    var d = new Date();
-    d.setDate(d.getDate() - 1);
-    var dayOfTheYearYesterday = d.getDOY();
-
-    options.path = '/people';
-    RetrieveData.getJSON(options, function(statusCode, result) {
-        if (statusCode === 200) {
-            console.log("Updating time entries: done!");
-            console.log("Length of people!!" + result.length)
-            for (var i = 0; i < result.length; i++) {
-                var employee = result[i].user;
-                if (employee.is_active) {
-                    options.path = '/daily/' + dayOfTheYearYesterday + '/' + d.getFullYear() + "?of_user=" + employee.id;
-                    RetrieveData.getJSON(options, function (statusCode, result) {
-                        if (statusCode === 200) {
-                            console.log(employee.id + " " + result.day_entries.length);
-                            for (var i = 0; i < result.day_entries.length; i++) {
-                                var timeEntry = result.day_entries[i];
-
-                                connection.query("INSERT INTO timeEntries (id, user_id, project_id, spent_at, hours) VALUES ('" + timeEntry.id + "', '" + timeEntry.user_id + "', '" +
-                                    timeEntry.project_id + "', '" + timeEntry.spent_at + "', '" + timeEntry.hours + "') " + "ON DUPLICATE KEY UPDATE id='" + timeEntry.id + "', user_id='" +
-                                    timeEntry.user_id + "', project_id='" + timeEntry.project_id + "', spent_at='" + timeEntry.spent_at + "', hours='" + timeEntry.hours + "'");
-
-                            }
-                        } else {
-                            console.log("An error has occurred when updating time entries.")
-                        }
-                    })
-                }
-            }
-        } else{
-            console.log("An error has occurred when updating time entries.")
-        }
-    });
-};
