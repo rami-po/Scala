@@ -184,7 +184,6 @@ exports.updateTimeEntries = function() {
                                 if (timeEntry.notes != null){
                                     timeEntry.notes = timeEntry.notes.replace(/'/g, "''");
                                 }
-                                console.log(timeEntry.notes);
 
                                 connection.query("INSERT INTO timeEntries (id, user_id, project_id, task_id, notes, spent_at, hours) VALUES ('" + timeEntry.id + "', '" + timeEntry.user_id + "', '" +
                                     timeEntry.project_id + "', '" + timeEntry.task_id + "', '" + timeEntry.notes + "', '" + timeEntry.spent_at + "', '" + timeEntry.hours + "') " +

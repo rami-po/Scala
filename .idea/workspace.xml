@@ -5,7 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="84251590-2422-41c2-a0b3-3c0d14316fbb" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/SQL.js" afterPath="$PROJECT_DIR$/SQL.js" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
@@ -44,8 +43,8 @@
       <file leaf-file-name="SQL.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/SQL.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1313">
-              <caret line="184" column="79" lean-forward="false" selection-start-line="184" selection-start-column="79" selection-end-line="184" selection-end-column="79" />
+            <state relative-caret-position="1366">
+              <caret line="185" column="33" lean-forward="false" selection-start-line="185" selection-start-column="33" selection-end-line="185" selection-end-column="33" />
               <folding>
                 <element signature="e#0#48#0" expanded="false" />
                 <element signature="e#848#977#0" expanded="false" />
@@ -53,8 +52,8 @@
                 <element signature="e#1320#2526#0" expanded="false" />
                 <element signature="e#4515#5717#0" expanded="false" />
                 <element signature="n#!!block;n#updateAssignments#0" expanded="false" />
-                <element signature="e#10673#11866#0" expanded="false" />
-                <element signature="e#11938#12514#0" expanded="false" />
+                <element signature="e#10611#11804#0" expanded="false" />
+                <element signature="e#11876#12452#0" expanded="false" />
                 <element signature="n#!!block;n#updateTimeEntries#0" expanded="false" />
                 <element signature="n#!!block;n#updateTimeEntries2#0" expanded="false" />
                 <element signature="n#!!block;n#updateAssignment#0" expanded="false" />
@@ -814,12 +813,12 @@
       <workItem from="1502209542784" duration="4590000" />
       <workItem from="1504047503873" duration="622000" />
       <workItem from="1504562698141" duration="18000" />
-      <workItem from="1504798034290" duration="1111000" />
+      <workItem from="1504798034290" duration="1667000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="115878000" />
+    <option name="totallyTimeSpent" value="116434000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -1254,8 +1253,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/SQL.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1313">
-          <caret line="184" column="79" lean-forward="false" selection-start-line="184" selection-start-column="79" selection-end-line="184" selection-end-column="79" />
+        <state relative-caret-position="1366">
+          <caret line="185" column="33" lean-forward="false" selection-start-line="185" selection-start-column="33" selection-end-line="185" selection-end-column="33" />
           <folding>
             <element signature="e#0#48#0" expanded="false" />
             <element signature="e#848#977#0" expanded="false" />
@@ -1263,8 +1262,8 @@
             <element signature="e#1320#2526#0" expanded="false" />
             <element signature="e#4515#5717#0" expanded="false" />
             <element signature="n#!!block;n#updateAssignments#0" expanded="false" />
-            <element signature="e#10673#11866#0" expanded="false" />
-            <element signature="e#11938#12514#0" expanded="false" />
+            <element signature="e#10611#11804#0" expanded="false" />
+            <element signature="e#11876#12452#0" expanded="false" />
             <element signature="n#!!block;n#updateTimeEntries#0" expanded="false" />
             <element signature="n#!!block;n#updateTimeEntries2#0" expanded="false" />
             <element signature="n#!!block;n#updateAssignment#0" expanded="false" />
