@@ -141,6 +141,28 @@ exports.updateProjectsAndAssignments = function(){
     })
 };
 
+function updateAssignments(projectIds){
+    var j = 0;
+    var intervalID = setInterval(function() {
+        if (j < projectIds.length){
+            options.path = '/projects/' + projectIds[j] + '/user_assignments';
+            updateAssignment();
+            j++;
+        } else {
+            console.log("Updating assignments: done!");
+            clearInterval(intervalID);
+        }
+    }, 16000);
+    /*
+     for (var j = 0; j < projectIds.length; j++){
+     options.path = '/projects/' + projectIds[j] + '/user_assignments';
+     updateAssignment();
+     //setTimeout(updateAssignment, 16000);
+     }
+     console.log("Updating assignments: done!");
+     */
+}
+
 exports.updateTimeEntries = function() {
     var d = new Date();
     d.setDate(d.getDate() - 1);
@@ -160,8 +182,9 @@ exports.updateTimeEntries = function() {
                                 var timeEntry = result.day_entries[i];
 
                                 if (timeEntry.notes != null){
-                                    timeEntry.notes = timeEntry.notes.replace("'", "''");
+                                    timeEntry.notes = timeEntry.notes.replace(/'/g, "''");
                                 }
+                                console.log(timeEntry.notes);
 
                                 connection.query("INSERT INTO timeEntries (id, user_id, project_id, task_id, notes, spent_at, hours) VALUES ('" + timeEntry.id + "', '" + timeEntry.user_id + "', '" +
                                     timeEntry.project_id + "', '" + timeEntry.task_id + "', '" + timeEntry.notes + "', '" + timeEntry.spent_at + "', '" + timeEntry.hours + "') " +
@@ -280,28 +303,6 @@ function updateTimeEntries2(day, year){
             console.log("An error has occurred when updating time entries.. " + JSON.stringify(result));
         }
     });
-}
-
-function updateAssignments(projectIds){
-    var j = 0;
-    var intervalID = setInterval(function() {
-        if (j < projectIds.length){
-            options.path = '/projects/' + projectIds[j] + '/user_assignments';
-            updateAssignment();
-            j++;
-        } else {
-            console.log("Updating assignments: done!");
-            clearInterval(intervalID);
-        }
-    }, 16000);
-    /*
-     for (var j = 0; j < projectIds.length; j++){
-     options.path = '/projects/' + projectIds[j] + '/user_assignments';
-     updateAssignment();
-     //setTimeout(updateAssignment, 16000);
-     }
-     console.log("Updating assignments: done!");
-     */
 }
 
 function updateAssignment(){
