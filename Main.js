@@ -7,8 +7,8 @@ var RetrieveData = require('./RetrieveData');
 var SQL = require('./SQL');
 
 var postheaders = {
-    'Content-Type' : 'application/json',
-    'Accept' : 'application/json',
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
     'Authorization': 'Basic ' + new Buffer('ops@productops.com:product0ps2017').toString('base64')
 };
 
@@ -21,7 +21,21 @@ var options = {
     headers: postheaders
 };
 
-exports.updateSQL = function(){
+
+
+function getAllTimesOld() {
+    let d = new Date();
+    d.setDate(d.getDate() - 1);
+    let dayOfTheYearYesterday = d.getDOY();
+
+    options.path = '/daily/' + dayOfTheYearYesterday + '/' + d.getFullYear() + '?slim=1';
+    console.log(options.path);
+    RetrieveData.getJSON(options, function (statusCode, result) {
+        console.log("onResult: (" + statusCode + ")" + JSON.stringify(result));
+    })
+}
+
+exports.updateSQL = function () {
     SQL.updateClients();
     SQL.updateEmployees();
     SQL.updateInvoices();
@@ -37,76 +51,118 @@ exports.updateSQL = function(){
     setTimeout(module.exports.updateSQL, millisTillMidnight);
 };
 
-function updateSQLCron(){
-    SQL.updateClients();
-    SQL.updateEmployees();
-    SQL.updateInvoices();
-    SQL.updateProjectsAndAssignments();
-    SQL.updateTimeEntries();
-    SQL.updateTasks();
+function updateSQLCron() {
+
+    SQL.updateEmployees()
+        .then(SQL.updateClients)
+        .then(SQL.updateInvoices)
+        .then(SQL.updateTasks)
+        .then(SQL.updateProjectsAndAssignments)
+        .then(SQL.updateTimeEntries);
+
+
+    // let i = 150;
+    // const intervalID = setInterval(function () {
+    //     if (i < 180) {
+    //         SQL.updateTimeEntries(i);
+    //         i++;
+    //     } else {
+    //         clearInterval(intervalID);
+    //     }
+    // }, 10000);
+
 }
 
 updateSQLCron();
 
-function getClient(request, response, next){
+function test() {
+    SQL.getTimeEntries({params: {}, query: {}}, function (err, result) {
+            if (err) {
+                console.log(err);
+            } else {
+                const totalCapacities = [];
+                for (let i = 0; i < result.length; i++) {
+                    const monday = getMonday(result[i].spent_at);
+                    if (totalCapacities[monday + '/' + result[i].user_id] == null) {
+                        totalCapacities[monday + '/' + result[i].user_id] = 0;
+                    }
+                    totalCapacities[monday + '/' + result[i].user_id] += result[i].hours;
+                }
+                for (const week in totalCapacities) {
+                    console.log(week + ', ' + totalCapacities[week]);
+                }
+            }
+        }
+    );
+}
+
+function getMonday(d) {
+    const date = new Date(d);
+    while (date.getDay() !== 1) {
+        date.setDate(date.getDate() - 1);
+    }
+    return date;
+}
+
+function getClient(request, response, next) {
     options.path = '/clients' + request.param.id;
-    RetrieveData.getJSON(options, function(statusCode, result) {
+    RetrieveData.getJSON(options, function (statusCode, result) {
         console.log("onResult: (" + statusCode + ")" + JSON.stringify(result));
     })
 }
 
-function getProjects(request, response, next){
+function getProjects(request, response, next) {
     options.path = '/projects'
-    RetrieveData.getJSON(options, function(statusCode, result) {
+    RetrieveData.getJSON(options, function (statusCode, result) {
         console.log("onResult: (" + statusCode + ")" + JSON.stringify(result));
     })
 }
 
-function getProject(request, response, next){
+function getProject(request, response, next) {
     options.path = '/projects' + request.param.id;
-    RetrieveData.getJSON(options, function(statusCode, result) {
+    RetrieveData.getJSON(options, function (statusCode, result) {
         console.log("onResult: (" + statusCode + ")" + JSON.stringify(result));
     })
 }
 
-function getAssignments(request, response, next){
-    options.path = '/assignments'
-    RetrieveData.getJSON(options, function(statusCode, result) {
+function getAssignments(request, response, next) {
+    options.path = '/projects/13107980/user_assignments/112727236';
+    RetrieveData.getJSON(options, function (statusCode, result) {
         console.log("onResult: (" + statusCode + ")" + JSON.stringify(result));
     })
 }
 
-function getAssignment(request, response, next){
+function getAssignment(request, response, next) {
     options.path = '/assignment' + request.param.id;
-    RetrieveData.getJSON(options, function(statusCode, result) {
+    RetrieveData.getJSON(options, function (statusCode, result) {
         console.log("onResult: (" + statusCode + ")" + JSON.stringify(result));
     })
 }
 
-function getEmployees(request, response, next){
+function getEmployees(request, response, next) {
     options.path = '/employees'
-    RetrieveData.getJSON(options, function(statusCode, result) {
+    RetrieveData.getJSON(options, function (statusCode, result) {
         console.log("onResult: (" + statusCode + ")" + JSON.stringify(result));
     })
 }
 
-function getEmployee(request, response, next){
+function getEmployee(request, response, next) {
     options.path = '/employee' + request.param.id;
-    RetrieveData.getJSON(options, function(statusCode, result) {
+    RetrieveData.getJSON(options, function (statusCode, result) {
         console.log("onResult: (" + statusCode + ")" + JSON.stringify(result));
     })
 }
 
-function getInvoices(request, response, next){
+function getInvoices(request, response, next) {
     options.path = '/invoices'
-    RetrieveData.getJSON(options, function(statusCode, result) {
+    RetrieveData.getJSON(options, function (statusCode, result) {
         console.log("onResult: (" + statusCode + ")" + JSON.stringify(result));
     })
 }
 
-function getInvoice(request, response, next){
+function getInvoice(request, response, next) {
     options.path = '/invoices' + request.param.id;
-    RetrieveData.getJSON(options, function(statusCode, result) {
+    RetrieveData.getJSON(options, function (statusCode, result) {
         console.log("onResult: (" + statusCode + ")" + JSON.stringify(result));
     })
 }
