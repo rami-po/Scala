@@ -147,11 +147,15 @@ exports.updateProjectsAndAssignments = function () {
                             projectIds.push(project.id);
                         }
 
-                        connection.query("INSERT INTO projects (id, client_id, active, name, code, cost_budget, billable, budget_by, state, created_date, last_checked_date, weekly_hour_budget) VALUES ('" + project.id + "', '" + project.client_id + "', '" +
+                        if (project.notes != null) {
+                            project.notes = project.notes.replace(/'/g, "''");
+                        }
+
+                        connection.query("INSERT INTO projects (id, client_id, active, name, code, cost_budget, billable, budget_by, state, created_date, last_checked_date, weekly_hour_budget, notes) VALUES ('" + project.id + "', '" + project.client_id + "', '" +
                             +project.active + "', '" + project.name + "', '" + project.code + "', '" + project.cost_budget + "', '" + +project.billable + "', '" + project.budget_by + "', '" + project.state + "', '" + project.created_at + "', '" +
-                            project.hint_latest_record_at + "', '" + project.weekly_hour_budget + "') ON DUPLICATE KEY UPDATE client_id='" + project.client_id + "', active='" + +project.active + "', name='" + project.name + "', code='" + project.code +
+                            project.hint_latest_record_at + "', '" + project.weekly_hour_budget + "', '" + project.notes + "') ON DUPLICATE KEY UPDATE client_id='" + project.client_id + "', active='" + +project.active + "', name='" + project.name + "', code='" + project.code +
                             "', cost_budget='" + project.cost_budget + "', billable='" + +project.billable + "', budget_by='" + project.budget_by + "', state='" + project.state + "', created_date='" + project.created_at + "', last_checked_date='" +
-                            project.hint_latest_record_at + "', weekly_hour_budget='" + project.hourly_rate + "'");
+                            project.hint_latest_record_at + "', weekly_hour_budget='" + project.hourly_rate + "', notes='" + project.notes + "'");
 
                     }
                     updateAssignments(projectIds, resolve);
@@ -188,7 +192,7 @@ function updateAssignments(projectIds, resolve) {
 
 exports.updateTimeEntries = function () {
     let d = new Date();
-    d.setDate(d.getDate() - 1);
+    d.setDate(d.getDate() - 22);
     let dayOfTheYearYesterday = d.getDOY();
 
     options.path = '/people';
@@ -227,6 +231,20 @@ exports.updateTimeEntries = function () {
         }
     });
 };
+
+function updateTimeEntries(i) {
+    let intervalID = setInterval(function () {
+        if(i <= 7) {
+            i++;
+            console.log('After function is called and increment, i is ' +  i);
+            module.exports.updateTimeEntries(i);
+        }
+        else {
+            console.log("Updating timeEntries: done!");
+            clearInterval(intervalID);
+        }
+    }, 31000);
+}
 
 exports.updateTasks = function () {
     return new Promise(
@@ -280,7 +298,7 @@ exports.initializeTimeEntries = function () {
     }, 16000);
 };
 
-function updateTimeEntries(day, year) {
+function updateTimeEntries3(day, year) {
     RetrieveData.getJSON(options, function (statusCode, result) {
         if (statusCode === 200) {
             console.log(result);
@@ -344,7 +362,7 @@ function updateAssignment() {
                 connection.query("INSERT INTO assignments (id, user_id, project_id, is_project_manager, deactivated, hourly_rate, budget, created_at, updated_at, estimate, expected_weekly_hours) VALUES ('" + assignment.id + "', '" +
                     assignment.user_id + "', '" + assignment.project_id + "', '" + +assignment.is_project_manager + "', '" + +assignment.deactivated + "', '" + assignment.hourly_rate + "', '" + assignment.budget + "', '" +
                     assignment.created_at + "', '" + assignment.updated_at + "', '" + assignment.estimate + "', '" + assignment.expected_weekly_hours + "') ON DUPLICATE KEY UPDATE user_id='" + assignment.user_id +
-                    "', project_id='" + assignment.project_id + "', is_project_manager='" + +assignment.is_project_manager + "', deactivated='" + +assignment.deactivated + "', hourly_rate='" + assignment.default_hourly_rate +
+                    "', project_id='" + assignment.project_id + "', is_project_manager='" + +assignment.is_project_manager + "', deactivated='" + +assignment.deactivated + "', hourly_rate='" + assignment.hourly_rate +
                     "', budget='" + assignment.budget + "', created_at='" + assignment.created_at + "', updated_at='" + assignment.updated_at + "', estimate='" + assignment.estimate + "', expected_weekly_hours='" + assignment.expected_weekly_hours + "'");
 
             }

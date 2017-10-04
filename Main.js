@@ -53,13 +53,14 @@ exports.updateSQL = function () {
 
 function updateSQLCron() {
 
-    SQL.updateEmployees()
-        .then(SQL.updateClients)
-        .then(SQL.updateInvoices)
-        .then(SQL.updateTasks)
-        .then(SQL.updateProjectsAndAssignments)
-        .then(SQL.updateTimeEntries);
+    // SQL.updateEmployees()
+    //     .then(SQL.updateClients)
+    //     .then(SQL.updateInvoices)
+    //     .then(SQL.updateTasks)
+    //     .then(SQL.updateProjectsAndAssignments)
+    //     .then(SQL.updateTimeEntries);
 
+    SQL.updateTimeEntries();
 
     // let i = 150;
     // const intervalID = setInterval(function () {
