@@ -192,7 +192,7 @@ function updateAssignments(projectIds, resolve) {
 
 exports.updateTimeEntries = function () {
     let d = new Date();
-    d.setDate(d.getDate() - 22);
+    d.setDate(d.getDate() - 1);
     let dayOfTheYearYesterday = d.getDOY();
 
     options.path = '/people';
