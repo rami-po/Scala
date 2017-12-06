@@ -33,40 +33,56 @@ let connection = mysql.createConnection({
     database: sqlSecret.DATABASE
 });
 
-Object.prototype.getByIndex = function(index) {
+const projects = [];
+
+Object.prototype.getByIndex = function (index) {
     return this[Object.keys(this)[index]];
 };
 
-function getDataFromHarvest(path, table) {
+function getDataFromHarvest(path, table, id) {
     return new Promise((resolve, reject) => {
         options.path = path;
         RetrieveData.getJSON(options, function (statusCode, result) {
             if (result.getByIndex(0).length > 0) {
-                updateData(0, result, table, resolve);
+                updateData(0, result, table, resolve, id);
             } else {
                 resolve();
-                console.log(table + ' done updating! 0 fields updated.');
+                const assignmentProject = (table === 'assignments' ? '[' + id + ']' : '');
+                console.log(table + assignmentProject + ' done updating! 0 fields updated.');
             }
         })
     });
 }
 
-function updateData(count, data, table, resolve) {
+function getDataFromHarvestNoPromise(path, table, resolve, id) {
+    options.path = path;
+    RetrieveData.getJSON(options, function (statusCode, result) {
+        if (result.getByIndex(0).length > 0) {
+            updateData(0, result, table, resolve, id);
+        } else {
+            resolve();
+            const assignmentProject = (table === 'assignments' ? '[' + id + ']' : '');
+            console.log(table + assignmentProject + ' done updating! 0 fields updated.');
+        }
+    })
+}
+
+function updateData(count, data, table, resolve, id) {
     let dataJSON;
-    switch(table) {
+    switch (table) {
         case 'assignments':
             dataJSON = {
-                id: data.project_assignments[count].id,
-                user_id: data.project_assignments[count].user.id,
-                project_id: data.project_assignments[count].project.id,
-                is_project_manager: +data.project_assignments[count].is_project_manager,
-                deactivated: +!data.project_assignments[count].is_active,
-                hourly_rate: data.project_assignments[count].hourly_rate,
-                budget: data.project_assignments[count].budget,
-                created_at: data.project_assignments[count].created_at,
-                updated_at: data.project_assignments[count].updated_at,
-                estimate: data.project_assignments[count].estimate,
-                expected_weekly_hours: data.project_assignments[count].expected_weekly_hours
+                id: data.user_assignments[count].id,
+                user_id: data.user_assignments[count].user.id,
+                project_id: id,
+                is_project_manager: +data.user_assignments[count].is_project_manager,
+                deactivated: +!data.user_assignments[count].is_active,
+                hourly_rate: data.user_assignments[count].hourly_rate,
+                budget: data.user_assignments[count].budget,
+                created_at: data.user_assignments[count].created_at,
+                updated_at: data.user_assignments[count].updated_at,
+                estimate: data.user_assignments[count].estimate,
+                expected_weekly_hours: data.user_assignments[count].expected_weekly_hours
             };
             break;
         case 'clients':
@@ -107,6 +123,9 @@ function updateData(count, data, table, resolve) {
             };
             break;
         case 'projects':
+            if (data.projects[count].is_active) {
+                projects.push(data.projects[count]);
+            }
             dataJSON = {
                 id: data.projects[count].id,
                 client_id: data.projects[count].client.id,
@@ -150,42 +169,46 @@ function updateData(count, data, table, resolve) {
 
     connection.query('INSERT INTO ' + table + ' SET ? ON DUPLICATE KEY UPDATE ?', [dataJSON, dataJSON], function (err, result) {
         count++;
+        const assignmentProject = (table === 'assignments' ? '[' + id + ']' : '');
         if (count < data.getByIndex(0).length) {
-            updateData(count, data, table, resolve);
+            updateData(count, data, table, resolve, id);
         } else if (data.links.next !== null) {
-            console.log('updating ' + table + '... ' + count + ' fields updated.');
-            getDataFromHarvest(data.links.next, table);
+            console.log('updating ' + table + assignmentProject + '... ' + count + ' fields updated.');
+            getDataFromHarvestNoPromise(data.links.next, table, resolve, id);
         } else {
+            console.log(table + assignmentProject + ' done updating! ' + count + ' fields updated.');
             resolve();
-            console.log(table + ' done updating! ' + count + ' fields updated.');
         }
     })
 }
 
+const promises = [];
+
+function updateAssignments() {
+    return new Promise(
+        (resolve, reject) => {
+            for (const project of projects) {
+                promises.push(getDataFromHarvest('/v2/projects/' + project.id + '/user_assignments', 'assignments', project.id));
+            }
+            Promise.all(promises);
+            resolve();
+        }
+    )
+}
 
 let d = new Date();
 d.setDate(d.getDate() - 1);
-const date = d.toISOString().split('.')[0]+"Z";
+const date = d.toISOString().split('.')[0] + "Z";
 // getTimesFromHarvest('/v2/time_entries?updated_since=' + date);
 // getClientsFromHarvest('/v2/clients?updated_since=' + date);
 
 getDataFromHarvest('/v2/users?updated_since=' + date, 'employees')
-    .then(getDataFromHarvest.bind(null, '/v2/projects?updated_since=' + date, 'projects'))
+.then(getDataFromHarvest.bind(null, '/v2/projects', 'projects'))
     .then(getDataFromHarvest.bind(null, '/v2/clients?updated_since=' + date, 'clients'))
     .then(getDataFromHarvest.bind(null, '/v2/invoices?updated_since=' + date, 'invoices'))
     .then(getDataFromHarvest.bind(null, '/v2/tasks?updated_since=' + date, 'tasks'))
-    .then(getDataFromHarvest.bind(null, '/v2/project_assignments?updated_since=' + date, 'assignments'))
-    .then(getDataFromHarvest.bind(null, '/v2/time_entries?updated_since=' + date, 'timeEntries'));
-
-
-
-
-
-
-
-
-
-
+    .then(getDataFromHarvest.bind(null, '/v2/time_entries?updated_since=' + date, 'timeEntries'))
+    .then(updateAssignments);
 
 
 // function getTimesFromHarvest(path) {
