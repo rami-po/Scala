@@ -106,7 +106,8 @@ function updateData(count, data, table, resolve, id) {
                 default_hourly_rate: data.users[count].default_hourly_rate,
                 department: data.users[count].department,
                 updated_at: data.users[count].updated_at,
-                cost_rate: data.users[count].cost_rate
+                cost_rate: data.users[count].cost_rate,
+                capacity: data.users[count].weekly_capacity
             };
             break;
         case 'invoices':
